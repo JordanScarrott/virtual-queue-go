@@ -1,0 +1,3 @@
+temporal:
+  hostPort: "localhost:7233"
+  taskQueue: "QUEUE_TASK_QUEUE"
