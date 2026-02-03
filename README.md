@@ -1,116 +1,96 @@
-# Red Duck - Virtual Queue Application
+# Red Duck - Virtual Queue System
 
-Red Duck is a backend service for a Virtual Queue application, built with **Go** and **Temporal.io**. It follows a strict **Hexagonal Architecture (Ports and Adapters)** to ensure separation of concerns and testability.
+A Temporal-based Virtual Queue system implemented in Go using Hexagonal Architecture.
 
 ## Architecture
 
-The project is structured according to the Ports and Adapters pattern:
-
-- **Core (`internal/core`)**: Contains the business logic and domain entities. This layer is **Pure Go** and has zero external dependencies (no Temporal, no Database drivers).
-    - `domain`: Entity definitions.
-    - `ports`: Interfaces for driving (services) and driven (repositories/adapters) components.
-- **Application (`internal/application`)**: Orchestrates the business logic using Use Cases or Command Handlers.
-- **Adapters (`internal/adapters`)**: implementations of the ports.
-    - `temporal`: Primary (Driving) adapter. Contains Workflows, Activities, and the Worker implementation.
-    - `config`: Secondary (Driven) adapter. Handles configuration loading.
-- **Cmd (`cmd`)**: Entry points for the application.
-    - `worker`: The main executable that starts the Temporal Worker.
+- **Domain:** Pure Go entities (`Queue`) representing the business logic.
+- **Workflow:** `QueueWorkflow` acts as an Actor, maintaining state in memory and handling Signals (`Join`, `Leave`) and Queries (`GetQueue`).
+- **Adapter:** `QueueClient` bridges the Domain Port to the Temporal SDK.
+- **HTTP:** Simple REST API to interact with the queues.
 
 ## Prerequisites
 
-- **Go**: Latest stable version (e.g., 1.22+).
-- **Temporal Server**: You need a running instance of the Temporal Server.
-    - The easiest way is using the [Temporal CLI](https://docs.temporal.io/cli): `temporal server start-dev`.
+- Go 1.23+
+- Temporal Server running locally (e.g., via `temporal server start-dev`)
 
 ## Getting Started
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd red-duck
-   ```
+### 1. Start the Worker
 
-2. **Configuration**
-   The application uses `application.yaml` for configuration. The default settings assume a local Temporal instance:
-   ```yaml
-   temporal:
-     host: "localhost"
-     port: 7233
-     taskQueue: "red-duck-queue"
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   go mod tidy
-   ```
-
-## Running the Worker
-
-To start the Temporal Worker:
+The worker executes the Queue Workflows.
 
 ```bash
 go run cmd/worker/main.go
 ```
 
-Or build and run:
+### 2. Start the HTTP Server
+
+The server provides a REST API to interact with the queues.
 
 ```bash
-go build -o worker cmd/worker/main.go
-./worker
+go run cmd/server/main.go
 ```
 
-You should see logs indicating the worker has started and is polling the task queue `red-duck-queue`.
+## API Usage (Curl Examples)
 
-## Triggering a Workflow
+Here are the common user stories you can execute using `curl`.
 
-You can verify the worker is functioning correctly by starting the placeholder `NoOpWorkflow`.
+### Create a Queue
 
-### Option 1: Using the Temporal Web UI
-
-1. Open your browser to the Temporal UI (default: [http://localhost:8233](http://localhost:8233)).
-2. Navigate to the **Workflows** page.
-3. Click the **Start Workflow** button (top right).
-4. Fill in the following details:
-   - **Workflow ID**: `test-noop-1` (or any unique string)
-   - **Task Queue**: `red-duck-queue`
-   - **Workflow Type**: `NoOpWorkflow`
-5. Click **Start Workflow**.
-
-You should see the workflow execution status change to **Completed** almost immediately. You can click on the workflow ID to view the execution history and verify that `NoOpActivity` was executed.
-
-### Option 2: Using the Temporal CLI
+Starts a new Queue Workflow.
 
 ```bash
-temporal workflow start \
-  --task-queue red-duck-queue \
-  --type NoOpWorkflow \
-  --workflow-id test-noop-cli
+# Create a queue named "barbershop-1"
+curl -X POST http://localhost:8080/queues/barbershop-1
 ```
 
-## Running Tests
+### Join a Queue
 
-Run all tests using:
+Adds a user to the queue.
 
 ```bash
-go test ./...
+# User "alice" joins "barbershop-1"
+curl -X POST http://localhost:8080/queues/barbershop-1/join \
+     -H "Content-Type: application/json" \
+     -d '{"userID": "alice"}'
+
+# User "bob" joins "barbershop-1"
+curl -X POST http://localhost:8080/queues/barbershop-1/join \
+     -H "Content-Type: application/json" \
+     -d '{"userID": "bob"}'
 ```
 
-## Project Structure
+### Get Queue Status
 
+Retrieves the current state of the queue (list of users).
+
+```bash
+curl http://localhost:8080/queues/barbershop-1
 ```
-.
-├── application.yaml          # Configuration file
-├── cmd
-│   └── worker                # Worker entry point
-│       └── main.go
-├── go.mod
-├── internal
-│   ├── adapters
-│   │   ├── config            # Configuration adapter (Viper)
-│   │   └── temporal          # Temporal Workflows & Activities
-│   ├── application           # Use Cases
-│   └── core
-│       ├── domain            # Domain Entities (Pure Go)
-│       └── ports             # Interfaces (Pure Go)
-└── README.md
+
+*Response:*
+```json
+{
+  "ID": "barbershop-1",
+  "Items": [
+    {"UserID": "alice", "JoinedAt": "2023-10-27T10:00:00Z"},
+    {"UserID": "bob", "JoinedAt": "2023-10-27T10:05:00Z"}
+  ]
+}
 ```
+
+### Leave a Queue
+
+Removes a user from the queue.
+
+```bash
+# User "alice" leaves "barbershop-1"
+curl -X POST http://localhost:8080/queues/barbershop-1/leave \
+     -H "Content-Type: application/json" \
+     -d '{"userID": "alice"}'
+```
+
+### View in Temporal UI
+
+Open the Temporal Web UI (usually at http://localhost:8233) to see the `QueueWorkflow` executions. You can view the Event History to see `Signal` and `Query` events.

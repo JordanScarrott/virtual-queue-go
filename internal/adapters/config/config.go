@@ -9,12 +9,17 @@ import (
 
 type Config struct {
 	Temporal TemporalConfig
+	Server   ServerConfig
 }
 
 type TemporalConfig struct {
 	Host      string
 	Port      int
 	TaskQueue string
+}
+
+type ServerConfig struct {
+	Port int
 }
 
 func Load() (*Config, error) {

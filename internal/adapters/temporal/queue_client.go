@@ -7,20 +7,22 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
-const TaskQueue = "QUEUE_TASK_QUEUE"
-
 type QueueClient struct {
-	client client.Client
+	client    client.Client
+	taskQueue string
 }
 
-func NewQueueClient(c client.Client) *QueueClient {
-	return &QueueClient{client: c}
+func NewQueueClient(c client.Client, taskQueue string) *QueueClient {
+	return &QueueClient{
+		client:    c,
+		taskQueue: taskQueue,
+	}
 }
 
 func (c *QueueClient) CreateQueue(ctx context.Context, queueID string) error {
 	options := client.StartWorkflowOptions{
 		ID:        queueID,
-		TaskQueue: TaskQueue,
+		TaskQueue: c.taskQueue,
 	}
 
 	_, err := c.client.ExecuteWorkflow(ctx, options, QueueWorkflow, queueID)
