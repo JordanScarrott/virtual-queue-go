@@ -1,6 +1,6 @@
 module red-duck
 
-go 1.24.3
+go 1.23.0
 
 require (
 	github.com/spf13/viper v1.21.0
