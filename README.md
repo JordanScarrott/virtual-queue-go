@@ -61,6 +61,32 @@ go build -o worker cmd/worker/main.go
 
 You should see logs indicating the worker has started and is polling the task queue `red-duck-queue`.
 
+## Triggering a Workflow
+
+You can verify the worker is functioning correctly by starting the placeholder `NoOpWorkflow`.
+
+### Option 1: Using the Temporal Web UI
+
+1. Open your browser to the Temporal UI (default: [http://localhost:8233](http://localhost:8233)).
+2. Navigate to the **Workflows** page.
+3. Click the **Start Workflow** button (top right).
+4. Fill in the following details:
+   - **Workflow ID**: `test-noop-1` (or any unique string)
+   - **Task Queue**: `red-duck-queue`
+   - **Workflow Type**: `NoOpWorkflow`
+5. Click **Start Workflow**.
+
+You should see the workflow execution status change to **Completed** almost immediately. You can click on the workflow ID to view the execution history and verify that `NoOpActivity` was executed.
+
+### Option 2: Using the Temporal CLI
+
+```bash
+temporal workflow start \
+  --task-queue red-duck-queue \
+  --type NoOpWorkflow \
+  --workflow-id test-noop-cli
+```
+
 ## Running Tests
 
 Run all tests using:
