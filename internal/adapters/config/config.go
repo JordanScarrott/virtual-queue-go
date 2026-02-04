@@ -9,12 +9,17 @@ import (
 
 type Config struct {
 	Temporal TemporalConfig
+	Nats     NatsConfig
 }
 
 type TemporalConfig struct {
 	Host      string
 	Port      int
 	TaskQueue string
+}
+
+type NatsConfig struct {
+	URL string
 }
 
 func Load() (*Config, error) {

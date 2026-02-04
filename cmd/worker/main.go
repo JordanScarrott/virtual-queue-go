@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/nats-io/nats.go"
 	"go.temporal.io/sdk/client"
 
 	"red-duck/internal/adapters/config"
@@ -18,7 +19,6 @@ func main() {
 	}
 
 	// 2. Initialize Temporal Client
-	// Note: In a real production setup, you might want to configure TLS and other options here.
 	c, err := client.Dial(client.Options{
 		HostPort: fmt.Sprintf("%s:%d", cfg.Temporal.Host, cfg.Temporal.Port),
 	})
@@ -27,9 +27,17 @@ func main() {
 	}
 	defer c.Close()
 
-	// 3. Start Worker
+	// 3. Initialize NATS Client
+	nc, err := nats.Connect(cfg.Nats.URL)
+	if err != nil {
+		log.Printf("Warning: Failed to connect to NATS: %v. Publishing will be disabled.", err)
+	} else {
+		defer nc.Close()
+	}
+
+	// 4. Start Worker
 	// This will block until the worker is stopped.
-	err = temporal.StartWorker(c, cfg.Temporal.TaskQueue)
+	err = temporal.StartWorker(c, cfg.Temporal.TaskQueue, nc)
 	if err != nil {
 		log.Fatalf("Unable to start worker: %v", err)
 	}
