@@ -1,94 +1,116 @@
-# Virtual Queue System
+# Red Duck - Virtual Queue Application
 
-This project implements a "Virtual Queue" system using Temporal workflows and the "Workflow as an Actor" pattern. It follows Hexagonal Architecture principles to separate core domain logic from infrastructure concerns like Temporal.
+Red Duck is a backend service for a Virtual Queue application, built with **Go** and **Temporal.io**. It follows a strict **Hexagonal Architecture (Ports and Adapters)** to ensure separation of concerns and testability.
 
 ## Architecture
 
-The system is structured into layers:
+The project is structured according to the Ports and Adapters pattern:
 
-- **`internal/core/domain`**: Pure Go business logic. Defines the `Queue` entity and its behavior. **No external dependencies.**
-- **`internal/core/ports`**: Interfaces (Ports) that the core domain uses to interact with the outside world.
-- **`internal/workflows`**: Temporal Workflow definitions. These act as the orchestration layer, binding the domain state to Temporal signals and queries.
-- **`internal/adapters/secondary`**: Implementations of the ports (Adapters). `TemporalQueueClient` implements `QueueService` using the Temporal SDK.
-- **`cmd/worker`**: The entry point for the Temporal Worker process.
-
-### Workflow as an Actor
-
-Each specific Queue (e.g., "Queue-123") is modeled as a single, long-running Temporal Workflow Execution.
-- **Workflow ID**: The Queue ID.
-- **State**: Held in memory within the workflow execution.
-- **Signals**: `JoinQueue`, `LeaveQueue` modify the state.
-- **Queries**: `GetState` exposes the current state.
+- **Core (`internal/core`)**: Contains the business logic and domain entities. This layer is **Pure Go** and has zero external dependencies (no Temporal, no Database drivers).
+    - `domain`: Entity definitions.
+    - `ports`: Interfaces for driving (services) and driven (repositories/adapters) components.
+- **Application (`internal/application`)**: Orchestrates the business logic using Use Cases or Command Handlers.
+- **Adapters (`internal/adapters`)**: implementations of the ports.
+    - `temporal`: Primary (Driving) adapter. Contains Workflows, Activities, and the Worker implementation.
+    - `config`: Secondary (Driven) adapter. Handles configuration loading.
+- **Cmd (`cmd`)**: Entry points for the application.
+    - `worker`: The main executable that starts the Temporal Worker.
 
 ## Prerequisites
 
-- Go 1.20+
-- [Temporal Server](https://docs.temporal.io/cli#starting-the-temporal-server) running locally (default: `localhost:7233`).
+- **Go**: Latest stable version (e.g., 1.22+).
+- **Temporal Server**: You need a running instance of the Temporal Server.
+    - The easiest way is using the [Temporal CLI](https://docs.temporal.io/cli): `temporal server start-dev`.
 
-## Configuration
+## Getting Started
 
-Configuration is loaded from `application.yaml` in the root directory.
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd red-duck
+   ```
 
-```yaml
-temporal:
-  hostPort: "localhost:7233"
-  taskQueue: "QUEUE_TASK_QUEUE"
-```
+2. **Configuration**
+   The application uses `application.yaml` for configuration. The default settings assume a local Temporal instance:
+   ```yaml
+   temporal:
+     host: "localhost"
+     port: 7233
+     taskQueue: "red-duck-queue"
+   ```
 
-## Running the Project
+3. **Install Dependencies**
+   ```bash
+   go mod tidy
+   ```
 
-### 1. Start Temporal Server
-Ensure your local Temporal server is running.
-```bash
-temporal server start-dev
-```
+## Running the Worker
 
-### 2. Run Tests
-Run unit tests for the domain logic and the workflow logic (using `testsuite`).
-```bash
-go test ./...
-```
+To start the Temporal Worker:
 
-### 3. Run the Worker
-The worker listens on the configured Task Queue and executes the workflows.
 ```bash
 go run cmd/worker/main.go
 ```
 
-## Usage (Client)
+Or build and run:
 
-To interact with the system, you would typically use the `TemporalQueueClient` adapter in your application code (e.g., an HTTP handler).
-
-Example:
-```go
-// Initialize Client
-c, _ := client.Dial(client.Options{})
-queueClient := secondary.NewTemporalQueueClient(c)
-
-// Create/Start a Queue
-queueClient.CreateQueue(ctx, "my-queue")
-
-// Join Queue
-queueClient.JoinQueue(ctx, "my-queue", "user-1")
-
-// Get Status
-status, _ := queueClient.GetQueueStatus(ctx, "my-queue")
-fmt.Println(status.Users) // ["user-1"]
+```bash
+go build -o worker cmd/worker/main.go
+./worker
 ```
 
-## Directory Structure
+You should see logs indicating the worker has started and is polling the task queue `red-duck-queue`.
+
+## Triggering a Workflow
+
+You can verify the worker is functioning correctly by starting the placeholder `NoOpWorkflow`.
+
+### Option 1: Using the Temporal Web UI
+
+1. Open your browser to the Temporal UI (default: [http://localhost:8233](http://localhost:8233)).
+2. Navigate to the **Workflows** page.
+3. Click the **Start Workflow** button (top right).
+4. Fill in the following details:
+   - **Workflow ID**: `test-noop-1` (or any unique string)
+   - **Task Queue**: `red-duck-queue`
+   - **Workflow Type**: `NoOpWorkflow`
+5. Click **Start Workflow**.
+
+You should see the workflow execution status change to **Completed** almost immediately. You can click on the workflow ID to view the execution history and verify that `NoOpActivity` was executed.
+
+### Option 2: Using the Temporal CLI
+
+```bash
+temporal workflow start \
+  --task-queue red-duck-queue \
+  --type NoOpWorkflow \
+  --workflow-id test-noop-cli
+```
+
+## Running Tests
+
+Run all tests using:
+
+```bash
+go test ./...
+```
+
+## Project Structure
 
 ```
 .
-├── cmd/
-│   └── worker/          # Worker entry point
-├── internal/
-│   ├── adapters/        # Adapters (infrastructure implementations)
-│   ├── config/          # Configuration loading
-│   ├── core/
-│   │   ├── domain/      # Pure business logic
-│   │   └── ports/       # Interfaces
-│   └── workflows/       # Temporal Workflow definitions
-├── application.yaml     # Configuration file
-└── go.mod
+├── application.yaml          # Configuration file
+├── cmd
+│   └── worker                # Worker entry point
+│       └── main.go
+├── go.mod
+├── internal
+│   ├── adapters
+│   │   ├── config            # Configuration adapter (Viper)
+│   │   └── temporal          # Temporal Workflows & Activities
+│   ├── application           # Use Cases
+│   └── core
+│       ├── domain            # Domain Entities (Pure Go)
+│       └── ports             # Interfaces (Pure Go)
+└── README.md
 ```

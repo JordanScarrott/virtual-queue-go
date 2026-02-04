@@ -1,3 +1,4 @@
 temporal:
-  hostPort: "localhost:7233"
-  taskQueue: "QUEUE_TASK_QUEUE"
+  host: "localhost"
+  port: 7233
+  taskQueue: "red-duck-queue"
