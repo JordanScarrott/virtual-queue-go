@@ -3,7 +3,7 @@ package workflows
 import (
 	"strings"
 
-	"example.com/virtual-queue/internal/core/domain"
+	"red-duck/internal/core/domain"
 	"go.temporal.io/sdk/workflow"
 )
 
