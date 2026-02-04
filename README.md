@@ -79,6 +79,21 @@ The server listens on `localhost:8080`.
 
 ### API Endpoints
 
+**POST /create_queue**
+
+Creates a new queue (starts the workflow).
+
+- **Query Params**:
+    - `business_id`: The ID of the business.
+    - `queue_id`: The ID of the queue.
+- **Response (201 Created)**:
+    ```json
+    {
+        "workflow_id": "biz1:q1",
+        "run_id": "..."
+    }
+    ```
+
 **POST /join_queue**
 
 Joins a user to a specific business queue.
@@ -89,7 +104,7 @@ Joins a user to a specific business queue.
 - **Body**:
     ```json
     {
-        "user_id": "user-123"
+        "userId": "user-123"
     }
     ```
 - **Response (200 OK)**:
@@ -100,6 +115,62 @@ Joins a user to a specific business queue.
     ```
 - **Response (409 Conflict)**:
     - If the user is already in the queue or the queue is closed.
+
+**POST /leave_queue**
+
+Removes a user from the queue.
+
+- **Query Params**:
+    - `business_id`: The ID of the business.
+    - `queue_id`: The ID of the queue.
+- **Body**:
+    ```json
+    {
+        "userId": "user-123"
+    }
+    ```
+- **Response (200 OK)**:
+    ```json
+    {
+        "remaining_users": 0
+    }
+    ```
+
+**GET /queue_status**
+
+Returns the current status of the queue.
+
+- **Query Params**:
+    - `business_id`: The ID of the business.
+    - `queue_id`: The ID of the queue.
+- **Response (200 OK)**:
+    ```json
+    {
+        "ID": "q1",
+        "BusinessID": "biz1",
+        "Users": ["user-124"]
+    }
+    ```
+
+### Example Usage (cURL)
+
+```bash
+# 1. Create a queue
+curl -X POST "http://localhost:8080/create_queue?business_id=biz1&queue_id=q1"
+
+# 2. Join the queue
+curl -X POST "http://localhost:8080/join_queue?business_id=biz1&queue_id=q1" \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "user-1"}'
+
+# 3. Check Status
+curl -X GET "http://localhost:8080/queue_status?business_id=biz1&queue_id=q1"
+
+# 4. Leave the queue
+curl -X POST "http://localhost:8080/leave_queue?business_id=biz1&queue_id=q1" \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "user-1"}'
+```
 
 ## Triggering a Workflow
 
