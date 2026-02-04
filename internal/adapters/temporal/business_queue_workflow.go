@@ -1,7 +1,6 @@
 package temporal
 
 import (
-	"errors"
 	"red-duck/internal/core/domain"
 	"red-duck/internal/pkg/update"
 
@@ -22,23 +21,14 @@ func BusinessQueueWorkflow(ctx workflow.Context, businessID, queueID string) err
 	err := workflow.SetUpdateHandlerWithOptions(ctx, joinQueueUpdate.Name(),
 		func(ctx workflow.Context, req domain.JoinRequest) (int, error) {
 			// Handler logic: Add user to state and return position
-			state.Users = append(state.Users, req.UserID)
-			position := len(state.Users)
+			position := state.AddUser(req.UserID)
 			logger.Info("User joined queue", "UserID", req.UserID, "Position", position)
 			return position, nil
 		},
 		workflow.UpdateHandlerOptions{
 			Validator: func(ctx workflow.Context, req domain.JoinRequest) error {
 				// Validator logic: Check if queue is closed or user already exists
-				if state.Closed {
-					return errors.New("queue is closed")
-				}
-				for _, uid := range state.Users {
-					if uid == req.UserID {
-						return errors.New("user already in queue")
-					}
-				}
-				return nil
+				return state.CanJoin(req.UserID)
 			},
 		},
 	)

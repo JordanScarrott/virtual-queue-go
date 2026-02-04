@@ -61,6 +61,46 @@ go build -o worker cmd/worker/main.go
 
 You should see logs indicating the worker has started and is polling the task queue `red-duck-queue`.
 
+## Features
+
+### Join Queue (Synchronous Update)
+
+The application now supports a synchronous "Join Queue" operation using **Temporal Updates**. This ensures that the client receives immediate feedback on whether they successfully joined the queue (and their position) or if the request was rejected (e.g., duplicate user, closed queue).
+
+## Running the HTTP Server
+
+To start the HTTP Server (which exposes the Join Queue endpoint):
+
+```bash
+go run cmd/server/main.go
+```
+
+The server listens on `localhost:8080`.
+
+### API Endpoints
+
+**POST /join_queue**
+
+Joins a user to a specific business queue.
+
+- **Query Params**:
+    - `business_id`: The ID of the business.
+    - `queue_id`: The ID of the queue.
+- **Body**:
+    ```json
+    {
+        "user_id": "user-123"
+    }
+    ```
+- **Response (200 OK)**:
+    ```json
+    {
+        "position": 1
+    }
+    ```
+- **Response (409 Conflict)**:
+    - If the user is already in the queue or the queue is closed.
+
 ## Triggering a Workflow
 
 You can verify the worker is functioning correctly by starting the placeholder `NoOpWorkflow`.
