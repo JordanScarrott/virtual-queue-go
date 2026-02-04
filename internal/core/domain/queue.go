@@ -1,48 +1,73 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+)
 
-// JoinRequest represents the payload to join a queue.
-type JoinRequest struct {
-	UserID string `json:"user_id"`
-}
+var (
+	ErrUserAlreadyInQueue = errors.New("user already in queue")
+	ErrUserNotFound       = errors.New("user not found in queue")
+)
 
-// Queue represents the state of a business queue.
 type Queue struct {
+	ID         string
 	BusinessID string
-	QueueID    string
-	Closed     bool
-	Users      []string // List of UserIDs in order
+	Users      []string
 }
 
-// NewQueue creates a new Queue.
-func NewQueue(businessID, queueID string) *Queue {
+func NewQueue(id, businessID string) *Queue {
 	return &Queue{
+		ID:         id,
 		BusinessID: businessID,
-		QueueID:    queueID,
-		Closed:     false,
 		Users:      make([]string, 0),
 	}
 }
 
-// CanJoin checks if a user can join the queue.
-// It returns an error if the queue is closed or the user is already in the queue.
-func (q *Queue) CanJoin(userID string) error {
-	if q.Closed {
-		return errors.New("queue is closed")
-	}
-	for _, uid := range q.Users {
-		if uid == userID {
-			return errors.New("user already in queue")
+// Enqueue adds a user to the end of the queue.
+func (q *Queue) Enqueue(userID string) error {
+	for _, u := range q.Users {
+		if u == userID {
+			return ErrUserAlreadyInQueue
 		}
 	}
+	q.Users = append(q.Users, userID)
 	return nil
 }
 
-// AddUser adds a user to the queue and returns their position (1-based).
-// It assumes CanJoin has already been called or validation is handled by the caller.
-// Ideally, CanJoin should be called before this.
-func (q *Queue) AddUser(userID string) int {
-	q.Users = append(q.Users, userID)
+// Dequeue removes a user from the queue by ID.
+func (q *Queue) Dequeue(userID string) error {
+	for i, u := range q.Users {
+		if u == userID {
+			q.Users = append(q.Users[:i], q.Users[i+1:]...)
+			return nil
+		}
+	}
+	return ErrUserNotFound
+}
+
+// GetPosition returns the 1-based index of the user in the queue.
+// Returns 0 if not found.
+func (q *Queue) GetPosition(userID string) int {
+	for i, u := range q.Users {
+		if u == userID {
+			return i + 1
+		}
+	}
+	return 0
+}
+
+// Len returns the number of users in the queue.
+func (q *Queue) Len() int {
 	return len(q.Users)
+}
+
+// Snapshot returns a copy of the current state
+func (q *Queue) Snapshot() Queue {
+	usersCopy := make([]string, len(q.Users))
+	copy(usersCopy, q.Users)
+	return Queue{
+		ID:         q.ID,
+		BusinessID: q.BusinessID,
+		Users:      usersCopy,
+	}
 }
