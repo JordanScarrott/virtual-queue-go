@@ -1,17 +1,42 @@
 package workflows
 
 import (
+	"strings"
+
 	"example.com/virtual-queue/internal/core/domain"
 	"go.temporal.io/sdk/workflow"
 )
 
-func QueueWorkflow(ctx workflow.Context) error {
+type QueueWorkflowInput struct {
+	BusinessID string
+	QueueID    string
+}
+
+func QueueWorkflow(ctx workflow.Context, input QueueWorkflowInput) error {
 	logger := workflow.GetLogger(ctx)
-	info := workflow.GetInfo(ctx)
-	queueID := info.WorkflowExecution.ID
+
+	// Fallback for missing input (if upgrading from old workflow version without input)
+	// In a real scenario, we'd handle versioning. Here we assume new executions.
+	// If BusinessID is missing, we might try to parse it from WorkflowID if we used a naming convention there,
+	// but passing it as input is cleaner.
 
 	// Initialize domain state
-	state := domain.NewQueue(queueID)
+	// Note: The Workflow ID is likely "BusinessID:QueueID", but the domain entity
+	// stores the raw IDs.
+	state := domain.NewQueue(input.QueueID, input.BusinessID)
+
+	// If input was empty (e.g. migration), we might default.
+	if state.ID == "" {
+		// Attempt to parse from Workflow ID: "bizID:queueID"
+		info := workflow.GetInfo(ctx)
+		parts := strings.SplitN(info.WorkflowExecution.ID, ":", 2)
+		if len(parts) == 2 {
+			state.BusinessID = parts[0]
+			state.ID = parts[1]
+		} else {
+			state.ID = info.WorkflowExecution.ID // Fallback
+		}
+	}
 
 	// Set Query Handler
 	err := workflow.SetQueryHandler(ctx, QueryGetState, func() (domain.Queue, error) {

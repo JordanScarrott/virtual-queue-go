@@ -7,8 +7,8 @@ import (
 )
 
 type QueueService interface {
-	CreateQueue(ctx context.Context, queueID string) error
-	JoinQueue(ctx context.Context, queueID, userID string) error
-	LeaveQueue(ctx context.Context, queueID, userID string) error
-	GetQueueStatus(ctx context.Context, queueID string) (*domain.Queue, error)
+	CreateQueue(ctx context.Context, businessID, queueID string) error
+	JoinQueue(ctx context.Context, businessID, queueID, userID string) error
+	LeaveQueue(ctx context.Context, businessID, queueID, userID string) error
+	GetQueueStatus(ctx context.Context, businessID, queueID string) (*domain.Queue, error)
 }

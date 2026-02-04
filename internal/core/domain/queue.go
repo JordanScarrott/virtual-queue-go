@@ -10,14 +10,16 @@ var (
 )
 
 type Queue struct {
-	ID    string
-	Users []string
+	ID         string
+	BusinessID string
+	Users      []string
 }
 
-func NewQueue(id string) *Queue {
+func NewQueue(id, businessID string) *Queue {
 	return &Queue{
-		ID:    id,
-		Users: make([]string, 0),
+		ID:         id,
+		BusinessID: businessID,
+		Users:      make([]string, 0),
 	}
 }
 
@@ -61,10 +63,11 @@ func (q *Queue) Len() int {
 
 // Snapshot returns a copy of the current state
 func (q *Queue) Snapshot() Queue {
-    usersCopy := make([]string, len(q.Users))
-    copy(usersCopy, q.Users)
-    return Queue{
-        ID: q.ID,
-        Users: usersCopy,
-    }
+	usersCopy := make([]string, len(q.Users))
+	copy(usersCopy, q.Users)
+	return Queue{
+		ID:         q.ID,
+		BusinessID: q.BusinessID,
+		Users:      usersCopy,
+	}
 }

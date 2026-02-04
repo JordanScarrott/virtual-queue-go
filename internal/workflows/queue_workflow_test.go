@@ -44,6 +44,8 @@ func (s *UnitTestSuite) TestQueueWorkflow() {
 		s.Equal(2, len(state.Users))
 		s.Equal("u1", state.Users[0])
 		s.Equal("u2", state.Users[1])
+		s.Equal("biz1", state.BusinessID)
+		s.Equal("q1", state.ID)
 	}, time.Second*3)
 
 	// Leave
@@ -67,8 +69,12 @@ func (s *UnitTestSuite) TestQueueWorkflow() {
 		s.env.SignalWorkflow(SignalExit, nil)
 	}, time.Second*6)
 
-	// Execute Workflow
-	s.env.ExecuteWorkflow(QueueWorkflow)
+	// Execute Workflow with Input
+	input := QueueWorkflowInput{
+		BusinessID: "biz1",
+		QueueID:    "q1",
+	}
+	s.env.ExecuteWorkflow(QueueWorkflow, input)
 
 	s.True(s.env.IsWorkflowCompleted())
 }

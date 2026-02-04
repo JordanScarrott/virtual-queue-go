@@ -5,7 +5,11 @@ import (
 )
 
 func TestQueue_Enqueue(t *testing.T) {
-	q := NewQueue("q1")
+	q := NewQueue("q1", "biz1")
+
+	if q.BusinessID != "biz1" {
+		t.Errorf("expected businessID biz1, got %s", q.BusinessID)
+	}
 
 	if err := q.Enqueue("u1"); err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -21,7 +25,7 @@ func TestQueue_Enqueue(t *testing.T) {
 }
 
 func TestQueue_Dequeue(t *testing.T) {
-	q := NewQueue("q1")
+	q := NewQueue("q1", "biz1")
 	q.Enqueue("u1")
 	q.Enqueue("u2")
 
@@ -43,7 +47,7 @@ func TestQueue_Dequeue(t *testing.T) {
 }
 
 func TestQueue_GetPosition(t *testing.T) {
-	q := NewQueue("q1")
+	q := NewQueue("q1", "biz1")
 	q.Enqueue("u1")
 	q.Enqueue("u2")
 
