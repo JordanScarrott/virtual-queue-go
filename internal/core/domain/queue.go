@@ -15,6 +15,10 @@ type Queue struct {
 	Users      []string
 }
 
+type JoinRequest struct {
+	UserID string `json:"userId"`
+}
+
 func NewQueue(id, businessID string) *Queue {
 	return &Queue{
 		ID:         id,
@@ -25,13 +29,25 @@ func NewQueue(id, businessID string) *Queue {
 
 // Enqueue adds a user to the end of the queue.
 func (q *Queue) Enqueue(userID string) error {
+	if err := q.CanJoin(userID); err != nil {
+		return err
+	}
+	q.AddUser(userID)
+	return nil
+}
+
+func (q *Queue) CanJoin(userID string) error {
 	for _, u := range q.Users {
 		if u == userID {
 			return ErrUserAlreadyInQueue
 		}
 	}
-	q.Users = append(q.Users, userID)
 	return nil
+}
+
+func (q *Queue) AddUser(userID string) int {
+	q.Users = append(q.Users, userID)
+	return len(q.Users)
 }
 
 // Dequeue removes a user from the queue by ID.

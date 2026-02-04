@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"example.com/virtual-queue/internal/core/domain"
+	"red-duck/internal/core/domain"
 )
 
 type QueueService interface {

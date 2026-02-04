@@ -12,6 +12,7 @@ func StartWorker(c client.Client, taskQueue string) error {
 	w := worker.New(c, taskQueue, worker.Options{})
 
 	w.RegisterWorkflow(NoOpWorkflow)
+	w.RegisterWorkflow(BusinessQueueWorkflow)
 	w.RegisterActivity(NoOpActivity)
 
 	log.Printf("Starting worker on task queue: %s", taskQueue)
