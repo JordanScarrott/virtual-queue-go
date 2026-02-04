@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
 
-	"example.com/virtual-queue/internal/core/domain"
+	"red-duck/internal/core/domain"
 )
 
 type UnitTestSuite struct {

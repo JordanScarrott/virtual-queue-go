@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"example.com/virtual-queue/internal/core/domain"
-	"example.com/virtual-queue/internal/core/ports"
-	"example.com/virtual-queue/internal/workflows"
+	"red-duck/internal/core/domain"
+	"red-duck/internal/core/ports"
+	"red-duck/internal/workflows"
 	"go.temporal.io/sdk/client"
 )
 
