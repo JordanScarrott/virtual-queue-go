@@ -37,6 +37,30 @@ func BusinessQueueWorkflow(ctx workflow.Context, businessID, queueID string) err
 		return err
 	}
 
+	// Define LeaveQueue Update
+	leaveQueueUpdate := update.New[domain.JoinRequest, int]("LeaveQueue")
+	err = workflow.SetUpdateHandler(ctx, leaveQueueUpdate.Name(),
+		func(ctx workflow.Context, req domain.JoinRequest) (int, error) {
+			err := state.Dequeue(req.UserID)
+			if err != nil {
+				return 0, err
+			}
+			logger.Info("User left queue", "UserID", req.UserID)
+			return state.Len(), nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	// Define GetStatus Query
+	err = workflow.SetQueryHandler(ctx, "GetStatus", func() (domain.Queue, error) {
+		return state.Snapshot(), nil
+	})
+	if err != nil {
+		return err
+	}
+
 	// Keep the workflow running until "Exit" signal is received
 	var exitSignal string
 	workflow.GetSignalChannel(ctx, "Exit").Receive(ctx, &exitSignal)

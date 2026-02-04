@@ -29,11 +29,15 @@ func main() {
 
 	// 3. Initialize HTTP Handler
 	queueHandler := &httpAdapter.QueueHandler{
-		Client: c,
+		Client:    c,
+		TaskQueue: cfg.Temporal.TaskQueue,
 	}
 
 	// 4. Setup Routes
+	http.HandleFunc("/create_queue", queueHandler.CreateQueue)
 	http.HandleFunc("/join_queue", queueHandler.JoinQueue)
+	http.HandleFunc("/leave_queue", queueHandler.LeaveQueue)
+	http.HandleFunc("/queue_status", queueHandler.GetQueueStatus)
 
 	// 5. Start Server
 	port := 8080
