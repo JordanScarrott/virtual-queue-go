@@ -9,6 +9,11 @@ import (
 
 type Config struct {
 	Temporal TemporalConfig
+	Nats     NatsConfig
+}
+
+type NatsConfig struct {
+	URL string
 }
 
 type TemporalConfig struct {

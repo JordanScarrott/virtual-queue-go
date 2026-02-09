@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/nats-io/nats.go"
 	"go.temporal.io/sdk/client"
@@ -31,7 +30,8 @@ func main() {
 	defer c.Close()
 
 	// 3. Connect to NATS
-	natsURL := os.Getenv("NATS_URL")
+	// 3. Connect to NATS
+	natsURL := cfg.Nats.URL
 	if natsURL == "" {
 		natsURL = nats.DefaultURL
 	}

@@ -21,6 +21,8 @@ The project is structured according to the Ports and Adapters pattern:
 - **Go**: Latest stable version (e.g., 1.22+).
 - **Temporal Server**: You need a running instance of the Temporal Server.
     - The easiest way is using the [Temporal CLI](https://docs.temporal.io/cli): `temporal server start-dev`.
+- **NATS Server**: You need a running NATS server for real-time notifications.
+    - Docker: `docker run -p 4222:4222 -p 8222:8222 nats:latest`
 
 ## Getting Started
 
@@ -37,6 +39,9 @@ The project is structured according to the Ports and Adapters pattern:
      host: "localhost"
      port: 7233
      taskQueue: "red-duck-queue"
+   
+   nats:
+     url: "nats://localhost:4222"
    ```
 
 3. **Install Dependencies**
@@ -63,6 +68,9 @@ You should see logs indicating the worker has started and is polling the task qu
 
 ## Features
 
+### Real-Time Notifications
+When a user joins or leaves a queue, the application publishes an event to NATS on the subject `events.queue.{business_id}`. This allows downstream services (e.g., websockets, analytics) to react to queue changes in real-time.
+
 ### Join Queue (Synchronous Update)
 
 The application now supports a synchronous "Join Queue" operation using **Temporal Updates**. This ensures that the client receives immediate feedback on whether they successfully joined the queue (and their position) or if the request was rejected (e.g., duplicate user, closed queue).
@@ -79,78 +87,7 @@ The server listens on `localhost:8080`.
 
 ### API Endpoints
 
-**POST /create_queue**
-
-Creates a new queue (starts the workflow).
-
-- **Query Params**:
-    - `business_id`: The ID of the business.
-    - `queue_id`: The ID of the queue.
-- **Response (201 Created)**:
-    ```json
-    {
-        "workflow_id": "biz1:q1",
-        "run_id": "..."
-    }
-    ```
-
-**POST /join_queue**
-
-Joins a user to a specific business queue.
-
-- **Query Params**:
-    - `business_id`: The ID of the business.
-    - `queue_id`: The ID of the queue.
-- **Body**:
-    ```json
-    {
-        "userId": "user-123"
-    }
-    ```
-- **Response (200 OK)**:
-    ```json
-    {
-        "position": 1
-    }
-    ```
-- **Response (409 Conflict)**:
-    - If the user is already in the queue or the queue is closed.
-
-**POST /leave_queue**
-
-Removes a user from the queue.
-
-- **Query Params**:
-    - `business_id`: The ID of the business.
-    - `queue_id`: The ID of the queue.
-- **Body**:
-    ```json
-    {
-        "userId": "user-123"
-    }
-    ```
-- **Response (200 OK)**:
-    ```json
-    {
-        "remaining_users": 0
-    }
-    ```
-
-**GET /queue_status**
-
-Returns the current status of the queue.
-
-- **Query Params**:
-    - `business_id`: The ID of the business.
-    - `queue_id`: The ID of the queue.
-- **Response (200 OK)**:
-    ```json
-    {
-        "ID": "q1",
-        "BusinessID": "biz1",
-        "Users": ["user-124"]
-    }
-    ```
+For detailed API documentation, please refer to [docs/API.md](docs/API.md).
 
 ### Example Usage (cURL)
 
