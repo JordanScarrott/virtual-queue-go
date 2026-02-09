@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/nats-io/nats.go"
 	"go.temporal.io/sdk/client"
@@ -21,8 +21,12 @@ func main() {
 
 	// 2. Initialize Temporal Client
 	// Note: In a real production setup, you might want to configure TLS and other options here.
+	hostPort := os.Getenv("TEMPORAL_HOST_URL")
+	if hostPort == "" {
+		hostPort = client.DefaultHostPort // Fallback for local dev
+	}
 	c, err := client.Dial(client.Options{
-		HostPort: fmt.Sprintf("%s:%d", cfg.Temporal.Host, cfg.Temporal.Port),
+		HostPort: hostPort,
 	})
 	if err != nil {
 		log.Fatalf("Unable to create client: %v", err)
