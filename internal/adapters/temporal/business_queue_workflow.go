@@ -1,6 +1,8 @@
 package temporal
 
 import (
+	"time"
+
 	"red-duck/internal/core/domain"
 	"red-duck/internal/pkg/update"
 
@@ -20,6 +22,24 @@ func BusinessQueueWorkflow(ctx workflow.Context, businessID, queueID string) err
 	// Set Update Handler with Options (Validator)
 	err := workflow.SetUpdateHandlerWithOptions(ctx, joinQueueUpdate.Name(),
 		func(ctx workflow.Context, req domain.JoinRequest) (int, error) {
+			// Activity Options
+			container := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+				StartToCloseTimeout: 10 * time.Second,
+			})
+
+			// Call JoinQueue Activity (Simulated DB + NATS)
+			var a *QueueActivities
+			params := JoinQueueParams{
+				BusinessID:      businessID,
+				QueueLength:     state.Len() + 1,
+				WaitTimeMinutes: (state.Len() + 1) * 5, // Rough estimate
+			}
+			err := workflow.ExecuteActivity(container, a.JoinQueue, params).Get(container, nil)
+			if err != nil {
+				logger.Error("JoinQueue activity failed", "Error", err)
+				return 0, err
+			}
+
 			// Handler logic: Add user to state and return position
 			position := state.AddUser(req.UserID)
 			logger.Info("User joined queue", "UserID", req.UserID, "Position", position)
@@ -41,7 +61,34 @@ func BusinessQueueWorkflow(ctx workflow.Context, businessID, queueID string) err
 	leaveQueueUpdate := update.New[domain.JoinRequest, int]("LeaveQueue")
 	err = workflow.SetUpdateHandler(ctx, leaveQueueUpdate.Name(),
 		func(ctx workflow.Context, req domain.JoinRequest) (int, error) {
-			err := state.Dequeue(req.UserID)
+			// Check if user exists before calling activity
+			if state.GetPosition(req.UserID) == 0 {
+				return 0, domain.ErrUserNotFound
+			}
+
+			// Activity Options
+			container := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+				StartToCloseTimeout: 10 * time.Second,
+			})
+
+			// Call LeaveQueue Activity
+			var a *QueueActivities
+			params := JoinQueueParams{
+				BusinessID:      businessID,
+				QueueLength:     state.Len() - 1,
+				WaitTimeMinutes: (state.Len() - 1) * 5,
+			}
+			if params.QueueLength < 0 {
+				params.QueueLength = 0
+				params.WaitTimeMinutes = 0
+			}
+
+			err := workflow.ExecuteActivity(container, a.LeaveQueue, params).Get(container, nil)
+			if err != nil {
+				return 0, err
+			}
+
+			err = state.Dequeue(req.UserID)
 			if err != nil {
 				return 0, err
 			}
