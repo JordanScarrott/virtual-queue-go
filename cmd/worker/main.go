@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
@@ -136,6 +137,54 @@ func main() {
 
 			json.NewEncoder(w).Encode(map[string]string{
 				"token": token,
+			})
+		})
+
+		// Public Route: Join Queue (Guest Mode Support)
+		http.HandleFunc("/queues/join", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				return
+			}
+
+			// Define request struct locally or use map
+			var req struct {
+				BusinessID string `json:"business_id"`
+				UserID     string `json:"user_id"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+
+			// 1. Check for User ID (Guest Mode)
+			if req.UserID == "" {
+				req.UserID = uuid.New().String()
+			}
+
+			// 2. Start Workflow
+			// preserving logic: workflow_id = queue-<business_id>-<user_id>
+			workflowID := fmt.Sprintf("queue-%s-%s", req.BusinessID, req.UserID)
+			workflowOptions := client.StartWorkflowOptions{
+				ID:        workflowID,
+				TaskQueue: cfg.Temporal.TaskQueue,
+			}
+
+			// BusinessQueueWorkflow signature: (ctx, businessID, queueID)
+			// Assuming queueID is usually derived or same as businessID for simplicity in this context
+			queueID := req.BusinessID
+
+			run, err := c.ExecuteWorkflow(context.Background(), workflowOptions, temporal.BusinessQueueWorkflow, req.BusinessID, queueID)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Failed to start workflow: %v", err), http.StatusInternalServerError)
+				return
+			}
+
+			// 3. Update Response
+			json.NewEncoder(w).Encode(map[string]string{
+				"workflow_id": run.GetID(),
+				"run_id":      run.GetRunID(),
+				"user_id":     req.UserID,
 			})
 		})
 
