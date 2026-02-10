@@ -143,6 +143,15 @@ Run all tests using:
 go test ./...
 ```
 
+## 🔐 Authentication
+
+The system supports two authentication modes:
+
+1.  **Business Owners**: Email-based Magic Link (OTP). Requires a valid JWT for protected endpoints.
+2.  **Customers (Guests)**: Anonymous access. The system assigns a unique `user_id` upon joining a queue.
+
+For detailed manual testing instructions (using `curl`), please see [docs/AUTH_WORKFLOW.md](docs/AUTH_WORKFLOW.md).
+
 ## Project Structure
 
 ```
