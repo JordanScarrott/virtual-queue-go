@@ -139,6 +139,19 @@ func main() {
 			})
 		})
 
+		// Protected Route Example
+		http.HandleFunc("/req/me", auth.WithAuth(func(w http.ResponseWriter, r *http.Request) {
+			// Extract user info from context (optional)
+			// userID := r.Context().Value(auth.UserKey).(string)
+			// role := r.Context().Value(auth.RoleKey).(string)
+
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "You are authenticated!",
+				// "user_id": userID,
+				// "role":    role,
+			})
+		}))
+
 		log.Println("Starting HTTP server on :8080")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			log.Fatalf("HTTP server failed: %v", err)
