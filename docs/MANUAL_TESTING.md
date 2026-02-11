@@ -10,6 +10,27 @@ Use this guide to manually verify the **Authentication**, **Queue Management**, 
 
 ---
 
+## 0. Start Services
+
+Ensure the following services are running in separate terminals:
+
+1.  **Temporal Server**:
+    ```bash
+    temporal server start-dev
+    ```
+
+2.  **Go Server**:
+    ```bash
+    (cd virtual-queue-go && go run cmd/server/main.go)
+    ```
+
+3.  **Go Worker**:
+    ```bash
+    (cd virtual-queue-go && go run cmd/worker/main.go)
+    ```
+
+---
+
 ## Setup: Create Queue
 
 Before testing, ensure a queue exists.
