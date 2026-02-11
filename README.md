@@ -184,6 +184,16 @@ The system supports two authentication modes:
 
 For detailed manual testing instructions (using `curl`), please see [docs/AUTH_WORKFLOW.md](docs/AUTH_WORKFLOW.md).
 
+## 📚 Documentation
+
+*   [API Documentation](docs/API.md)
+*   [Architecture Overview](docs/ARCHITECTURE.md)
+*   [Authentication Workflow](docs/AUTH_WORKFLOW.md)
+*   [Adding Analytics](docs/ADDING_ANALYTICS.md)
+*   [Manual Testing Guide](docs/MANUAL_TESTING.md)
+
+[← Back to Main README](../README.md)
+
 ## Project Structure
 
 ```
