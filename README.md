@@ -95,7 +95,7 @@ To start the HTTP Server (which exposes the Join Queue endpoint):
 go run cmd/server/main.go
 ```
 
-The server listens on `localhost:8080`.
+The server listens on `localhost:8080` (accessible via Caddy on `localhost:2015`).
 
 ### API Endpoints
 
@@ -105,18 +105,18 @@ For detailed API documentation, please refer to [docs/API.md](docs/API.md).
 
 ```bash
 # 1. Create a queue
-curl -X POST "http://localhost:8080/create_queue?business_id=biz1&queue_id=q1"
+curl -X POST "http://localhost:2015/create_queue?business_id=biz1&queue_id=q1"
 
 # 2. Join the queue
-curl -X POST "http://localhost:8080/join_queue?business_id=biz1&queue_id=q1" \
+curl -X POST "http://localhost:2015/join_queue?business_id=biz1&queue_id=q1" \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1"}'
 
 # 3. Check Status
-curl -X GET "http://localhost:8080/queue_status?business_id=biz1&queue_id=q1"
+curl -X GET "http://localhost:2015/queue_status?business_id=biz1&queue_id=q1"
 
 # 4. Leave the queue
-curl -X POST "http://localhost:8080/leave_queue?business_id=biz1&queue_id=q1" \
+curl -X POST "http://localhost:2015/leave_queue?business_id=biz1&queue_id=q1" \
   -H "Content-Type: application/json" \
   -d '{"userId": "user-1"}'
 ```
