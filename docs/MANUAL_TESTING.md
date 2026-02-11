@@ -55,7 +55,7 @@ Customers join purely anonymously. The system assigns a `user_id` which acts as 
 
 **Command:**
 ```bash
-curl -X POST http://localhost:2015/queues/barbershop-1/join \
+curl -X POST "http://localhost:2015/join_queue?business_id=barbershop-1&queue_id=barbershop-1" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -77,7 +77,7 @@ If a customer decides to walk away, they can leave the queue.
 **Command:**
 ```bash
 # Replace <PASTE_UUID_HERE> with the user_id from step 1
-curl -X POST http://localhost:2015/queues/barbershop-1/leave \
+curl -X POST "http://localhost:2015/leave_queue?business_id=barbershop-1&queue_id=barbershop-1" \
   -H "Content-Type: application/json" \
   -d '{"user_id": "<PASTE_UUID_HERE>"}'
 ```
