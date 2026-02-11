@@ -29,6 +29,12 @@ Ensure the following services are running in separate terminals:
     (cd virtual-queue-go && go run cmd/worker/main.go)
     ```
 
+4.  **NATS Listener (Optional)**:
+    Listen to all events (`>`) to verify messages are being published.
+    ```bash
+    nats sub ">"
+    ```
+
 ---
 
 ## Setup: Create Queue
