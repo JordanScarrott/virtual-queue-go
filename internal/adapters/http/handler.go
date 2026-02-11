@@ -14,6 +14,18 @@ import (
 	"red-duck/internal/workflows"
 )
 
+type Media struct {
+	LogoURL   string `json:"logo_url"`
+	HeaderURL string `json:"header_url"`
+}
+
+type QueueStatus struct {
+	BusinessID           string `json:"business_id"`
+	QueueLength          int    `json:"queue_length"`
+	EstimatedWaitMinutes int    `json:"estimated_wait_minutes"`
+	Media                Media  `json:"media"`
+}
+
 type QueueHandler struct {
 	Client    client.Client
 	TaskQueue string
@@ -161,8 +173,22 @@ func (h *QueueHandler) GetQueueStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queueLength := q.Len()
+	estimatedWait := queueLength * 5 // 5 minutes per person
+
+	// Build the response
+	status := QueueStatus{
+		BusinessID:           q.BusinessID,
+		QueueLength:          queueLength,
+		EstimatedWaitMinutes: estimatedWait,
+		Media: Media{
+			LogoURL:   fmt.Sprintf("http://localhost:2015/media/%s/logo.png", q.BusinessID),
+			HeaderURL: fmt.Sprintf("http://localhost:2015/media/%s/header.jpg", q.BusinessID),
+		},
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(q)
+	json.NewEncoder(w).Encode(status)
 }
 
 func (h *QueueHandler) CallNext(w http.ResponseWriter, r *http.Request) {

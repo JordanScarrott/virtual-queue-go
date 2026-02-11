@@ -98,3 +98,64 @@ curl -X POST http://localhost:2015/queues/barbershop-1/call-next \
 2. Changes status to `READY`.
 3. Sets `assigned_to` to "Counter 3".
 4. **Triggers NATS:** A message is published to `events.queue.barbershop-1` with `{ "instruction": "Go to Counter 3" }`.
+
+---
+
+## C. Media Verification
+
+Verify the Caddy -> MinIO pipeline is working correctly.
+
+### 1. Upload Test
+First, ensure MinIO is configured and has the default placeholder image.
+
+```bash
+# Run from project root
+./scripts/setup_minio.sh
+```
+
+### 2. Network Test
+Check that Caddy serves the image with correct headers.
+
+**Command:**
+```bash
+curl -I http://localhost:2015/media/default/logo.png
+```
+
+**Expected Response:**
+```
+HTTP/1.1 200 OK
+Content-Type: image/png
+Server: MinIO
+Cache-Control: public, max-age=86400
+Date: ...
+```
+
+### 3. API Integration Test
+Verify the Go Worker returns the correct Media URLs.
+
+**Command:**
+```bash
+# Replace "biz1" and "q1" with your queue details
+curl -X GET "http://localhost:2015/queue_status?business_id=biz1&queue_id=q1"
+```
+
+**Expected Response:**
+```json
+{
+  ...
+  "media": {
+    "logo_url": "http://localhost:2015/media/biz1/logo.png",
+    "header_url": "http://localhost:2015/media/biz1/header.jpg"
+  }
+}
+```
+
+---
+
+## D. Managing Test Images
+
+To update or add test images:
+
+1.  **Add Files**: Place them in `virtual-queue-go/assets/defaults/`.
+2.  **Sync**: Run `./scripts/setup_minio.sh`.
+3.  **Verify**: Access `http://localhost:2015/media/default/<filename>`.

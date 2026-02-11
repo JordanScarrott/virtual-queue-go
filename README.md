@@ -11,6 +11,7 @@ The project is structured according to the Ports and Adapters pattern:
   2. **Go Backend**: REST API and Temporal Worker.
   3. **Temporal**: Orchestration engine for queue workflows.
   4. **NATS**: Real-time messaging for immediate updates.
+  5. **MinIO**: S3-compatible object storage for media. Media is served directly via Caddy (Short Circuit), bypassing the application layer for speed.
 
 - **Core (`internal/core`)**: Contains the business logic and domain entities. This layer is **Pure Go** and has zero external dependencies (no Temporal, no Database drivers).
     - `domain`: Entity definitions.
@@ -62,15 +63,35 @@ The project is structured according to the Ports and Adapters pattern:
    docker compose up -d
    ```
 
+2. **Media Server**:
+   ```bash
+   ./scripts/start_media_server.sh
+   ./scripts/setup_minio.sh
+   ```
+
 2. **Worker**:
    ```bash
    go run cmd/worker/main.go
    ```
 
-3. **Proxy (Optional but recommended)**:
+4. **Dependencies**:
+   - `minio/mc` is used via Docker for setup, so no local install is required.
+
+5. **Proxy (Optional but recommended)**:
    ```bash
    caddy run
    ```
+
+## 🎨 Managing Test Images
+
+We use **MinIO** to serve media assets locally.
+
+1.  **Place Images**: Put your test images (e.g., `logo.png`, `header.jpg`) in `virtual-queue-go/assets/defaults/`.
+2.  **Sync**: Run the setup script to upload them to MinIO:
+    ```bash
+    ./scripts/setup_minio.sh
+    ```
+3.  **Access**: Images are available at `http://localhost:2015/media/default/<filename>`.
 
 ## Testing
 
