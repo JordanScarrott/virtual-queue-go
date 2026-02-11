@@ -2,8 +2,10 @@ package workflows
 
 import (
 	"strings"
+	"time"
 
 	"red-duck/internal/core/domain"
+
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -78,6 +80,40 @@ func QueueWorkflow(ctx workflow.Context, input QueueWorkflowInput) error {
 	selector.AddReceive(exitCh, func(c workflow.ReceiveChannel, more bool) {
 		c.Receive(ctx, nil)
 		exit = true
+	})
+
+	callNextCh := workflow.GetSignalChannel(ctx, SignalCallNext)
+	selector.AddReceive(callNextCh, func(c workflow.ReceiveChannel, more bool) {
+		var signal CallNextSignal
+		c.Receive(ctx, &signal)
+
+		ticket, err := state.ServeNext(signal.CounterID)
+		if err != nil {
+			logger.Info("Queue Empty", "CounterID", signal.CounterID)
+		} else {
+			logger.Info("Calling next user", "UserID", ticket.UserID, "CounterID", signal.CounterID)
+
+			// Execute Activity to notify external systems (NATS)
+			ao := workflow.ActivityOptions{
+				StartToCloseTimeout: time.Minute,
+			}
+			ctx = workflow.WithActivityOptions(ctx, ao)
+
+			params := CallNextParams{
+				BusinessID: state.BusinessID,
+				UserID:     ticket.UserID,
+				CounterID:  signal.CounterID,
+				Status:     string(ticket.Status),
+			}
+
+			// We use string name "CallNext" because we can't easily import activities struct due to potential cycles
+			// or just simple string binding.
+			// Ideally we would use a shared constant or dependency injection, but string is standard for loose coupling.
+			err := workflow.ExecuteActivity(ctx, "CallNext", params).Get(ctx, nil)
+			if err != nil {
+				logger.Error("Failed to execute CallNext activity", "Error", err)
+			}
+		}
 	})
 
 	// Main Loop

@@ -7,6 +7,7 @@ import (
 
 	"go.temporal.io/sdk/client"
 
+	"red-duck/auth"
 	"red-duck/internal/adapters/config"
 	httpAdapter "red-duck/internal/adapters/http"
 )
@@ -38,6 +39,9 @@ func main() {
 	http.HandleFunc("/join_queue", queueHandler.JoinQueue)
 	http.HandleFunc("/leave_queue", queueHandler.LeaveQueue)
 	http.HandleFunc("/queue_status", queueHandler.GetQueueStatus)
+
+	// Admin/Staff Route with Auth
+	http.HandleFunc("POST /queues/{id}/call-next", auth.WithAuth(queueHandler.CallNext))
 
 	// 5. Start Server
 	port := 8080

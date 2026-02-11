@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"red-duck/analytics"
+	"red-duck/internal/workflows"
 )
 
 type QueueActivities struct {
@@ -47,5 +48,21 @@ func (a *QueueActivities) LeaveQueue(ctx context.Context, params JoinQueueParams
 
 	// Fire and forget tracking
 	a.Tracker.Track("queue.left", params.BusinessID, params.UserID, props)
+	return nil
+}
+
+func (a *QueueActivities) CallNext(ctx context.Context, params workflows.CallNextParams) error {
+	// Simulate Database Transaction
+	log.Printf("Simulating DB transaction for CallNext businessID=%s userID=%s counter=%s", params.BusinessID, params.UserID, params.CounterID)
+
+	// Publish Event via Tracker
+	props := map[string]interface{}{
+		"status":      params.Status,
+		"instruction": "Go to " + params.CounterID,
+		"counter_id":  params.CounterID,
+	}
+
+	// Fire and forget tracking
+	a.Tracker.Track("queue.called", params.BusinessID, params.UserID, props)
 	return nil
 }

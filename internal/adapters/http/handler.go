@@ -8,8 +8,10 @@ import (
 
 	"go.temporal.io/sdk/client"
 
+	"red-duck/auth"
 	"red-duck/internal/core/domain"
 	"red-duck/internal/pkg/update"
+	"red-duck/internal/workflows"
 )
 
 type QueueHandler struct {
@@ -161,4 +163,51 @@ func (h *QueueHandler) GetQueueStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(q)
+}
+
+func (h *QueueHandler) CallNext(w http.ResponseWriter, r *http.Request) {
+	// 1. Get BusinessID from Auth Context
+	businessID, ok := auth.GetBusinessID(r.Context())
+	if !ok || businessID == "" {
+		http.Error(w, "unauthorized: missing business context", http.StatusUnauthorized)
+		return
+	}
+
+	// 2. Get QueueID from URL
+	// Using Go 1.22+ path value
+	queueID := r.PathValue("id")
+	if queueID == "" {
+		http.Error(w, "missing queue_id", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Parse Body
+	var req struct {
+		CounterID string `json:"counter_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.CounterID == "" {
+		http.Error(w, "missing counter_id", http.StatusBadRequest)
+		return
+	}
+
+	// 4. Signal Workflow
+	workflowID := fmt.Sprintf("%s:%s", businessID, queueID)
+	// We use SignalCallNext const from workflows package
+	signal := workflows.CallNextSignal{
+		CounterID: req.CounterID,
+	}
+
+	err := h.Client.SignalWorkflow(r.Context(), workflowID, "", workflows.SignalCallNext, signal)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to signal workflow: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "signal_sent"})
 }

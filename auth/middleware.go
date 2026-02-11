@@ -14,6 +14,7 @@ type key int
 const (
 	UserKey key = iota
 	RoleKey
+	BusinessIDKey
 )
 
 // GetUserID retrieves the UserID from the context
@@ -26,6 +27,12 @@ func GetUserID(ctx context.Context) (string, bool) {
 func GetRole(ctx context.Context) (string, bool) {
 	role, ok := ctx.Value(RoleKey).(string)
 	return role, ok
+}
+
+// GetBusinessID retrieves the BusinessID from the context
+func GetBusinessID(ctx context.Context) (string, bool) {
+	businessID, ok := ctx.Value(BusinessIDKey).(string)
+	return businessID, ok
 }
 
 // WithAuth is a middleware that validates JWT tokens
@@ -65,6 +72,7 @@ func WithAuth(next http.HandlerFunc) http.HandlerFunc {
 			// 5. Context Injection
 			ctx := context.WithValue(r.Context(), UserKey, claims.UserID)
 			ctx = context.WithValue(ctx, RoleKey, claims.Role)
+			ctx = context.WithValue(ctx, BusinessIDKey, claims.BusinessID)
 			next(w, r.WithContext(ctx))
 		} else {
 			http.Error(w, "Invalid token claims", http.StatusUnauthorized)

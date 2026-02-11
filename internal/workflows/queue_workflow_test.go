@@ -41,9 +41,9 @@ func (s *UnitTestSuite) TestQueueWorkflow() {
 		var state domain.Queue
 		err = res.Get(&state)
 		s.NoError(err)
-		s.Equal(2, len(state.Users))
-		s.Equal("u1", state.Users[0])
-		s.Equal("u2", state.Users[1])
+		s.Equal(2, len(state.Tickets))
+		s.Equal("u1", state.Tickets[0].UserID)
+		s.Equal("u2", state.Tickets[1].UserID)
 		s.Equal("biz1", state.BusinessID)
 		s.Equal("q1", state.ID)
 	}, time.Second*3)
@@ -60,8 +60,8 @@ func (s *UnitTestSuite) TestQueueWorkflow() {
 		var state domain.Queue
 		err = res.Get(&state)
 		s.NoError(err)
-		s.Equal(1, len(state.Users))
-		s.Equal("u2", state.Users[0])
+		s.Equal(1, len(state.Tickets))
+		s.Equal("u2", state.Tickets[0].UserID)
 	}, time.Second*5)
 
 	// Exit

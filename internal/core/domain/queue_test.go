@@ -37,8 +37,8 @@ func TestQueue_Dequeue(t *testing.T) {
 		t.Errorf("expected len 1, got %d", q.Len())
 	}
 
-	if q.Users[0] != "u2" {
-		t.Errorf("expected u2 at head, got %s", q.Users[0])
+	if q.Tickets[0].UserID != "u2" {
+		t.Errorf("expected u2 at head, got %s", q.Tickets[0].UserID)
 	}
 
 	if err := q.Dequeue("u3"); err != ErrUserNotFound {
