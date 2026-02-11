@@ -1,5 +1,7 @@
 # Virtual Queue API Documentation
 
+[← Back to README](../../README.md)
+
 This document describes the HTTP API endpoints provided by the `red-duck` virtual queue service.
 
 The API server runs on port `8080` by default, but is exposed via Caddy on port `2015`.

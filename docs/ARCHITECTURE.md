@@ -1,5 +1,7 @@
 # Project Architecture
 
+[← Back to README](../../README.md)
+
 ## 📸 The Media Pipeline
 
 The application employs a "Short Circuit" architecture for handling media assets (images, logos, headers). This design decouples high-bandwidth media serving from the application logic.

@@ -1,10 +1,23 @@
 # Manual Testing Cheat Sheet
 
+[← Back to README](../../README.md)
+
 Use this guide to manually verify the **Authentication**, **Queue Management**, and **Service Point Routing** features using `curl`.
 
 **Assumptions:**
 - Backend is running behind Caddy at `http://localhost:2015`.
 - You have `jq` installed (optional, for pretty printing JSON).
+
+---
+
+## Setup: Create Queue
+
+Before testing, ensure a queue exists.
+
+**Command:**
+```bash
+curl -X POST "http://localhost:2015/create_queue?business_id=barbershop-1&queue_id=barbershop-1"
+```
 
 ---
 

@@ -1,5 +1,7 @@
 # Adding Analytics
 
+[← Back to README](../../README.md)
+
 This guide explains how to add analytics tracking to the codebase. We have streamlined the process to a single line of code for most use cases.
 
 ## The "One-Liner"

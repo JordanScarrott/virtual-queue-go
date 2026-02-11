@@ -1,4 +1,6 @@
-# Authentication Workflow Guide
+# Authentication Workflow
+
+[← Back to README](../../README.md)
 
 This guide explains how to manually test the authentication system using `curl`.
 
