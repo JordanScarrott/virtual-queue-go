@@ -38,7 +38,11 @@ func (t *Tracker) Track(eventType, businessID, userID string, props map[string]i
 		return err
 	}
 
-	return t.nc.Publish(fmt.Sprintf("events.%s", eventType), data)
+	if err := t.nc.Publish(fmt.Sprintf("events.%s", eventType), data); err != nil {
+		fmt.Printf("Error publishing event to NATS: %v\n", err)
+		return nil // Non-blocking: swallow error
+	}
+	return nil
 }
 
 // GlobalTracker is a singleton instance for easier usage

@@ -30,12 +30,8 @@ func (a *QueueActivities) JoinQueue(ctx context.Context, params JoinQueueParams)
 		"estimated_wait": params.WaitTimeMinutes,
 	}
 
-	err := a.Tracker.Track("queue.joined", params.BusinessID, params.UserID, props)
-	if err != nil {
-		log.Printf("Error tracking event: %v", err)
-		// Constraint: Do NOT fail the Activity
-		return nil
-	}
+	// Fire and forget tracking
+	a.Tracker.Track("queue.joined", params.BusinessID, params.UserID, props)
 	return nil
 }
 
@@ -49,10 +45,7 @@ func (a *QueueActivities) LeaveQueue(ctx context.Context, params JoinQueueParams
 		"queue_length": params.QueueLength, // Optional context
 	}
 
-	err := a.Tracker.Track("queue.left", params.BusinessID, params.UserID, props)
-	if err != nil {
-		log.Printf("Error tracking event: %v", err)
-		return nil
-	}
+	// Fire and forget tracking
+	a.Tracker.Track("queue.left", params.BusinessID, params.UserID, props)
 	return nil
 }
