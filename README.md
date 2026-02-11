@@ -6,6 +6,12 @@ Red Duck is a backend service for a Virtual Queue application, built with **Go**
 
 The project is structured according to the Ports and Adapters pattern:
 
+- **Architecture Overview**:
+  1. **Caddy**: Reverse proxy handling TLS and routing.
+  2. **Go Backend**: REST API and Temporal Worker.
+  3. **Temporal**: Orchestration engine for queue workflows.
+  4. **NATS**: Real-time messaging for immediate updates.
+
 - **Core (`internal/core`)**: Contains the business logic and domain entities. This layer is **Pure Go** and has zero external dependencies (no Temporal, no Database drivers).
     - `domain`: Entity definitions.
     - `ports`: Interfaces for driving (services) and driven (repositories/adapters) components.
@@ -49,22 +55,28 @@ The project is structured according to the Ports and Adapters pattern:
    go mod tidy
    ```
 
-## Running the Worker
+## Quick Start
 
-To start the Temporal Worker:
+1. **Infrastructure**:
+   ```bash
+   docker compose up -d
+   ```
 
-```bash
-go run cmd/worker/main.go
-```
+2. **Worker**:
+   ```bash
+   go run cmd/worker/main.go
+   ```
 
-Or build and run:
+3. **Proxy (Optional but recommended)**:
+   ```bash
+   caddy run
+   ```
 
-```bash
-go build -o worker cmd/worker/main.go
-./worker
-```
+## Testing
 
-You should see logs indicating the worker has started and is polling the task queue `red-duck-queue`.
+> 👉 **[Click here for Manual Testing / Curl Commands](docs/MANUAL_TESTING.md)** - Run through the full User & Staff lifecycle.
+
+To run automated tests:
 
 ## Features
 
