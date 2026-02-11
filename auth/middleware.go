@@ -16,6 +16,18 @@ const (
 	RoleKey
 )
 
+// GetUserID retrieves the UserID from the context
+func GetUserID(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(UserKey).(string)
+	return userID, ok
+}
+
+// GetRole retrieves the Role from the context
+func GetRole(ctx context.Context) (string, bool) {
+	role, ok := ctx.Value(RoleKey).(string)
+	return role, ok
+}
+
 // WithAuth is a middleware that validates JWT tokens
 func WithAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

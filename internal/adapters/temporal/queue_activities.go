@@ -8,7 +8,7 @@ import (
 )
 
 type QueueActivities struct {
-	Tracker *analytics.Tracker
+	Tracker analytics.EventTracker
 }
 
 type JoinQueueParams struct {

@@ -78,7 +78,8 @@ func main() {
 	tracker := analytics.NewTracker(nc)
 
 	// Start Ingest Consumer
-	go analytics.StartIngest(nc, dbPool)
+	repo := analytics.NewPostgresRepository(dbPool)
+	go analytics.StartIngest(nc, repo)
 
 	// 6. Initialize Worker
 	w := worker.New(c, cfg.Temporal.TaskQueue, worker.Options{})
