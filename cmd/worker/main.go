@@ -9,14 +9,16 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 
+	"red-duck/analytics"
 	"red-duck/auth"
+	"red-duck/db"
 	"red-duck/internal/adapters/config"
 	"red-duck/internal/adapters/temporal"
-	"red-duck/internal/analytics"
 )
 
 func main() {
@@ -51,10 +53,34 @@ func main() {
 		defer nc.Close()
 	}
 
-	// 4. Initialize Tracker
+	// 4. Initialize Database & Migrations
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		// Fallback for local dev
+		dbURL = "postgres://user:password@localhost:5432/virtual_queue?sslmode=disable"
+	}
+
+	// Run Migrations
+	migrationConn, err := db.ConnectAndMigrate(dbURL)
+	if err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+	migrationConn.Close(context.Background())
+
+	// Create Connection Pool for Consumer
+	dbPool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		log.Fatalf("Unable to create connection pool: %v", err)
+	}
+	defer dbPool.Close()
+
+	// 5. Initialize Analytics
 	tracker := analytics.NewTracker(nc)
 
-	// 5. Initialize Worker
+	// Start Ingest Consumer
+	go analytics.StartIngest(nc, dbPool)
+
+	// 6. Initialize Worker
 	w := worker.New(c, cfg.Temporal.TaskQueue, worker.Options{})
 
 	// Register Core Workflows & Activities

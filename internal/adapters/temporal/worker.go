@@ -2,7 +2,7 @@ package temporal
 
 import (
 	"log"
-	"red-duck/internal/analytics"
+	"red-duck/analytics"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"

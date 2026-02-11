@@ -31,6 +31,7 @@ func BusinessQueueWorkflow(ctx workflow.Context, businessID, queueID string) err
 			var a *QueueActivities
 			params := JoinQueueParams{
 				BusinessID:      businessID,
+				UserID:          req.UserID,
 				QueueLength:     state.Len() + 1,
 				WaitTimeMinutes: (state.Len() + 1) * 5, // Rough estimate
 			}

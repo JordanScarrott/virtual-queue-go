@@ -3,9 +3,8 @@ package temporal
 import (
 	"context"
 	"log"
-	"time"
 
-	"red-duck/internal/analytics"
+	"red-duck/analytics"
 )
 
 type QueueActivities struct {
@@ -14,6 +13,7 @@ type QueueActivities struct {
 
 type JoinQueueParams struct {
 	BusinessID      string
+	UserID          string
 	QueueLength     int
 	WaitTimeMinutes int
 }
@@ -22,20 +22,17 @@ func (a *QueueActivities) JoinQueue(ctx context.Context, params JoinQueueParams)
 	// Simulate Database Transaction
 	// In a real application, we would save the JoinRequest to the database here.
 	// Since no database code was found, we simulate success.
-	log.Printf("Simulating DB transaction for JoinQueue businessID=%s", params.BusinessID)
+	log.Printf("Simulating DB transaction for JoinQueue businessID=%s userID=%s", params.BusinessID, params.UserID)
 
-	// Publish Event to NATS
-	payload := map[string]interface{}{
-		"type":              "QUEUE_UPDATED",
-		"business_id":       params.BusinessID,
-		"queue_length":      params.QueueLength,
-		"wait_time_minutes": params.WaitTimeMinutes,
-		"last_updated":      time.Now().Format(time.RFC3339),
+	// Publish Event to NATS via Tracker
+	props := map[string]interface{}{
+		"queue_length":   params.QueueLength,
+		"estimated_wait": params.WaitTimeMinutes,
 	}
 
-	err := a.Tracker.PublishEvent("joined", params.BusinessID, payload)
+	err := a.Tracker.Track("queue.joined", params.BusinessID, params.UserID, props)
 	if err != nil {
-		log.Printf("Error publishing event to NATS: %v", err)
+		log.Printf("Error tracking event: %v", err)
 		// Constraint: Do NOT fail the Activity
 		return nil
 	}
@@ -44,20 +41,17 @@ func (a *QueueActivities) JoinQueue(ctx context.Context, params JoinQueueParams)
 
 func (a *QueueActivities) LeaveQueue(ctx context.Context, params JoinQueueParams) error {
 	// Simulate Database Transaction
-	log.Printf("Simulating DB transaction for LeaveQueue businessID=%s", params.BusinessID)
+	log.Printf("Simulating DB transaction for LeaveQueue businessID=%s userID=%s", params.BusinessID, params.UserID)
 
-	// Publish Event
-	payload := map[string]interface{}{
-		"type":              "QUEUE_UPDATED",
-		"business_id":       params.BusinessID,
-		"queue_length":      params.QueueLength,
-		"wait_time_minutes": params.WaitTimeMinutes,
-		"last_updated":      time.Now().Format(time.RFC3339),
+	// Publish Event via Tracker
+	props := map[string]interface{}{
+		"reason":       "user_quit",
+		"queue_length": params.QueueLength, // Optional context
 	}
 
-	err := a.Tracker.PublishEvent("left", params.BusinessID, payload)
+	err := a.Tracker.Track("queue.left", params.BusinessID, params.UserID, props)
 	if err != nil {
-		log.Printf("Error publishing event to NATS: %v", err)
+		log.Printf("Error tracking event: %v", err)
 		return nil
 	}
 	return nil
