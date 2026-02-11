@@ -110,7 +110,7 @@ First, ensure MinIO is configured and has the default placeholder image.
 
 ```bash
 # Run from project root
-./scripts/setup_minio.sh
+./scripts/reset_media_server.sh
 ```
 
 ### 2. Network Test
@@ -157,5 +157,5 @@ curl -X GET "http://localhost:2015/queue_status?business_id=biz1&queue_id=q1"
 To update or add test images:
 
 1.  **Add Files**: Place them in `virtual-queue-go/assets/defaults/`.
-2.  **Sync**: Run `./scripts/setup_minio.sh`.
+2.  **Sync**: Run `./scripts/reset_media_server.sh`.
 3.  **Verify**: Access `http://localhost:2015/media/default/<filename>`.

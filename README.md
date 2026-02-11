@@ -65,8 +65,7 @@ The project is structured according to the Ports and Adapters pattern:
 
 2. **Media Server**:
    ```bash
-   ./scripts/start_media_server.sh
-   ./scripts/setup_minio.sh
+   ./scripts/reset_media_server.sh
    ```
 
 2. **Worker**:
@@ -89,7 +88,7 @@ We use **MinIO** to serve media assets locally.
 1.  **Place Images**: Put your test images (e.g., `logo.png`, `header.jpg`) in `virtual-queue-go/assets/defaults/`.
 2.  **Sync**: Run the setup script to upload them to MinIO:
     ```bash
-    ./scripts/setup_minio.sh
+    ./scripts/reset_media_server.sh
     ```
 3.  **Access**: Images are available at `http://localhost:2015/media/default/<filename>`.
 

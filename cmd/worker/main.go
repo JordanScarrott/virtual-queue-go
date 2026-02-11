@@ -57,7 +57,7 @@ func main() {
 	dbURL := os.Getenv("DB_URL")
 	if dbURL == "" {
 		// Fallback for local dev
-		dbURL = "postgres://user:password@localhost:5432/virtual_queue?sslmode=disable"
+		dbURL = "postgres://redduck:redduck@localhost:5432/analytics?sslmode=disable"
 	}
 
 	// Run Migrations
