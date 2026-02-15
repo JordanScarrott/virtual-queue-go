@@ -1,0 +1,142 @@
+services:
+  postgresql:
+    image: postgres:13.5
+    container_name: temporal-local-postgresql
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./develop/github/postgresql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - temporal-local-network
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: temporal-local-server
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      POSTGRES_SEEDS: postgresql
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: temporal
+      DB_PORT: "5432"
+      LOG_LEVEL: info
+    ports:
+      - "7233:7233" # gRPC
+      - "7243:7243" # HTTP
+    networks:
+      - temporal-local-network
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: temporal-local-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    ports:
+      - "8233:8080"
+    networks:
+      - temporal-local-network
+
+  nats:
+    image: nats:latest
+    container_name: temporal-local-nats
+    command: [ "-js", "-DV" ]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats_data:/data
+    networks:
+      - temporal-local-network
+
+  minio:
+    image: minio/minio
+    container_name: temporal-local-minio
+    command: [ "server", "/data", "--console-address", ":9001" ]
+    environment:
+      MINIO_ROOT_USER: redduck_admin
+      MINIO_ROOT_PASSWORD: redduck_secret_key
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - temporal-local-network
+
+  caddy:
+    image: caddy:latest
+    container_name: temporal-local-caddy
+    command: [ "caddy", "run", "--config", "/etc/caddy/caddy.json" ]
+    ports:
+      - "2015:80"
+      - "2019:2019"
+    volumes:
+      - ./caddy.json:/etc/caddy/caddy.json
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - temporal-local-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  server:
+    build: .
+    volumes:
+      - .:/app
+    command: /bin/server
+    ports:
+      - "8081:8081"
+    environment:
+      - TEMPORAL_HOST=temporal
+      - TEMPORAL_PORT=7233
+      - TEMPORAL_TASKQUEUE=red-duck-queue
+    depends_on:
+      temporal:
+        condition: service_started
+    networks:
+      - temporal-local-network
+  # worker:
+  #   build: .
+  #   volumes:
+  #     - .:/app
+  #   command: /bin/worker
+  #   ports:
+  #     - "8082:8082"
+  #   environment:
+  #     - TEMPORAL_HOST=temporal
+  #     - TEMPORAL_HOST_URL=temporal:7233
+  #     - NATS_URL=nats://nats:4222
+  #     - DB_URL=postgres://temporal:temporal@postgresql:5432/redduck_analytics?sslmode=disable
+  #   depends_on:
+  #     temporal:
+  #       condition: service_started
+  #     nats:
+  #       condition: service_started
+  #     postgresql:
+  #       condition: service_healthy
+  #   networks:
+  #     - temporal-local-network
+
+networks:
+  temporal-local-network:
+    driver: bridge
+
+volumes:
+  nats_data:
+  minio_data:
+  caddy_data:
+  caddy_config:
+
+

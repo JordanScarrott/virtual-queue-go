@@ -228,8 +228,8 @@ func main() {
 			})
 		}))
 
-		log.Println("Starting HTTP server on :8081")
-		if err := http.ListenAndServe(":8081", nil); err != nil {
+		log.Println("Starting HTTP server on :8082")
+		if err := http.ListenAndServe(":8082", nil); err != nil {
 			log.Fatalf("HTTP server failed: %v", err)
 		}
 	}()

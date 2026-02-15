@@ -1,32 +1,37 @@
-# Stage 1: Build the Go binaries
-FROM golang:1.24-alpine AS builder
+# Build Stage
+FROM golang:1.24.0-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency files first
+# Install build dependencies if needed (e.g. for CGO, though we usually disable it for scratch/alpine)
+# RUN apk add --no-cache git
+
+# Copy go mod and sum files
 COPY go.mod go.sum ./
+
+# Download dependencies
 RUN go mod download
 
-# Copy the rest of the source code
+# Copy source code
 COPY . .
 
-# Build the binaries
-RUN go build -o server ./cmd/server
-RUN go build -o worker ./cmd/worker
+# Build Server
+RUN go build -o /bin/server ./cmd/server
 
-# Stage 2: Create the production image
+# Build Worker
+# RUN go build -o /bin/worker ./cmd/worker
+
+# Final Stage
 FROM alpine:latest
 
-WORKDIR /root/
+WORKDIR /app
 
-# Copy the binaries from the builder stage
-COPY --from=builder /app/server .
-COPY --from=builder /app/worker .
-# Copy application.yaml if it exists, though environment variables are preferred
-COPY --from=builder /app/application.yaml .
+# Install CA certificates
+RUN apk --no-cache add ca-certificates
+
+# Copy binaries from builder
+COPY --from=builder /bin/server /bin/server
+# COPY --from=builder /bin/worker /bin/worker
 
 # Expose ports
-EXPOSE 8080 8081
-
-# Default command (can be overridden in docker-compose)
-CMD ["./server"]
+EXPOSE 8081 8082

@@ -1,0 +1,85 @@
+{
+    "apps": {
+        "http": {
+            "servers": {
+                "redduck_proxy": {
+                    "listen": [
+                        ":2015"
+                    ],
+                    "routes": [
+                        {
+                            "match": [
+                                {
+                                    "path": [
+                                        "/media/*"
+                                    ]
+                                }
+                            ],
+                            "handle": [
+                                {
+                                    "handler": "rewrite",
+                                    "uri_substring": [
+                                        {
+                                            "find": "/media",
+                                            "replace": "/public"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "handler": "headers",
+                                    "response": {
+                                        "set": {
+                                            "Cache-Control": [
+                                                "public, max-age=86400"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "handler": "reverse_proxy",
+                                    "upstreams": [
+                                        {
+                                            "dial": "minio:9000"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "match": [
+                                {
+                                    "path": [
+                                        "/auth/*",
+                                        "/queues/join"
+                                    ]
+                                }
+                            ],
+                            "handle": [
+                                {
+                                    "handler": "reverse_proxy",
+                                    "upstreams": [
+                                        {
+                                            "dial": "worker:8082"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "handle": [
+                                {
+                                    "handler": "reverse_proxy",
+                                    "upstreams": [
+                                        {
+                                            "dial": "server:8081"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

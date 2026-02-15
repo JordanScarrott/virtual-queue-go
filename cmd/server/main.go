@@ -44,7 +44,7 @@ func main() {
 	http.HandleFunc("POST /queues/{id}/call-next", auth.WithAuth(queueHandler.CallNext))
 
 	// 5. Start Server
-	port := 8080
+	port := 8081
 	log.Printf("Starting HTTP server on port %d...", port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
