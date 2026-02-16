@@ -80,7 +80,8 @@ services:
     container_name: temporal-local-caddy
     command: [ "caddy", "run", "--config", "/etc/caddy/caddy.json" ]
     ports:
-      - "2015:80"
+      - "80:80"
+      - "2015:2015"
       - "2019:2019"
     volumes:
       - ./caddy.json:/etc/caddy/caddy.json
